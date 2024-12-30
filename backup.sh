@@ -1,17 +1,14 @@
 #!/bin/bash
 
-# Directories change these based on your needs
+# Directories
 directory="minecraft-server"
-backup_dir="server_backup"
+backup_dir="/root/server_backup"
 split_dir="server_backup/split_backups"
 
-# Telegram bot token and chat ID
-BOT_TOKEN="your_bot_token"
 CHAT_ID="-1002420089111"
 
-# GitHub repository details
-GITHUB_OWNER="alex5402"
-GITHUB_REPO="minecraftserver-automation"
+telegram_cli_path="/root/serverspace/telegram-cli"
+
 
 # Clean the backup and split directories
 clean_backup_dir() {
@@ -25,38 +22,45 @@ clean_backup_dir() {
 # Create a tar backup
 create_backup() {
   backup_file="${backup_dir}/server-backup.tar.gz"
-
+  
   echo "Creating backup..."
   tar -czf "$backup_file" -C "$directory" --exclude="session.lock" .
   echo "$backup_file"
-
+  
   # Split the backup file if it exceeds a particular size
-  split -b 1840M "$backup_file" "$split_dir/backup.part_"
+  split -b 1024M "$backup_file" "$split_dir/backup.part_" 
 }
 
-# Send GitHub release download link to Telegram
-send_github_links() {
-  release_tag="$(date +'%Y-%m-%d_%H-%M-%S')"
-  release_title="$release_tag"
+upload_files() {
 
-  echo "Creating a new GitHub release: $release_title"
-  gh release create "$release_tag" "$split_dir"/* --repo "$GITHUB_OWNER/$GITHUB_REPO" --title "$release_title" --notes "Automated backup release"
+    if [[ ! -d "$split_dir" ]]; then
+        echo "Error: Directory $split_dir does not exist."
+        return 1
+    fi
 
-  echo "Files uploaded to GitHub release: $release_title"
-  download_url="https://github.com/$GITHUB_OWNER/$GITHUB_REPO/releases/tag/$release_tag"
+    if [[ ! -x "$telegram_cli_path" ]]; then
+        echo "Error: Telegram CLI executable $telegram_cli_path not found or not executable."
+        return 1
+    fi
 
-  echo "Sending download link to Telegram..."
-  curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
-       -d chat_id="$CHAT_ID" \
-       -d text="Backup completed! Download the files here: $download_url"
-  echo "Download link sent to Telegram."
+    for file in "$split_dir"/*; do
+        if [[ -f "$file" ]]; then
+            description=$(date +'%Y-%m-%d_%H-%M-%S')
+            echo "Uploading file: $file with description: $description"
+            "$telegram_cli_path" -g "$CHAT_ID" -F "$file" -d "$description"
+            if [[ $? -ne 0 ]]; then
+                echo "Error: Failed to upload file $file"
+            else
+                echo "Successfully uploaded $file"
+            fi
+        fi
+    done
 }
 
 # Main process
 clean_backup_dir
 backup_file=$(create_backup)
+upload_files
 
-# Upload split files to GitHub release and send link to Telegram
-send_github_links
-
+rm -rf "$backup_dir"
 echo "All steps completed successfully."
