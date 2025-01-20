@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Directories
-directory="minecraft-server"
-backup_dir="/root/server_backup"
-split_dir="server_backup/split_backups"
+directory="/home/alex/Documents/minecraftserver-automation/server"
+backup_dir="~/temp/server_backup"
+split_dir="~/temp/server_backup/split_backups"
 
 CHAT_ID="-1002420089111"
 
@@ -57,10 +57,15 @@ upload_files() {
     done
 }
 
+sendfinalmessage() {
+    date = $(date)
+"$telegram_cli_path" -g "$CHAT_ID"  -t "Backup created at : $date"
+}
+
 # Main process
 clean_backup_dir
 backup_file=$(create_backup)
 upload_files
-
+sendfinalmessage
 rm -rf "$backup_dir"
 echo "All steps completed successfully."

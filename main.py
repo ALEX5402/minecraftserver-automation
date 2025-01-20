@@ -14,7 +14,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 ADMIN_FILE = 'admins.json'
 admins = []
 MONITOR_CHAT_ID = -1002420089111
-bot_token = "your_bot_token"
+bot_token = "bot_token"
 server_session = None
 server_stopped_manually = False
 server_start_time = None  # Track when the server was started
@@ -22,8 +22,7 @@ serverdelay = 30
 serveris_on = True
 screen_session = None
 backup_in_progress = False
-backup_folder = "server_backup/split_backups"
-serve_monitoring = False
+backupseasson =  False
 
 
 def load_or_create_admins(file_path=ADMIN_FILE):
@@ -198,7 +197,7 @@ async def checkserver():
             await asyncio.sleep(5)
 
 async def execute_backup_script(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global backup_in_progress
+    global backup_in_progress ,  backupseasson
 
     if update.effective_user.id not in admins:
         await update.message.reply_text("You are not authorized to use this command.")
@@ -212,16 +211,13 @@ async def execute_backup_script(update: Update, context: ContextTypes.DEFAULT_TY
         # Run the backup script
         backup_in_progress = True
         await send_telegram_notification(f"Backup started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        child = pexpect.spawn(
+        backupseasson = pexpect.spawn(
             "bash backup.sh",
             encoding="utf-8",
             timeout=None
         )
-        child.wait()
-
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        backup_in_progress = False
-        await send_telegram_notification(f"Backup created at {current_time}")
+        if backupseasson == None:
+            backup_in_progress = False
 
     except pexpect.exceptions.ExceptionPexpect as e:
         print(f"Error executing backup script: {e}")
