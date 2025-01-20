@@ -9,7 +9,6 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from telegram import Update, InputFile, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import logging
-from apscheduler.schedulers.blocking import BlockingScheduler
 
 ADMIN_FILE = 'admins.json'
 admins = []
@@ -239,10 +238,6 @@ def main() -> None:
     application.run_polling()
     logging.basicConfig(level=logging.INFO)
     logging.info("Message or event details")
-    scheduler = BlockingScheduler()
-    # Schedule the function to run every day at 3 am
-    scheduler.add_job(execute_backup_script, 'cron', hour=3, minute=0)
-    scheduler.start()   
 
 if __name__ == '__main__':
     main()
