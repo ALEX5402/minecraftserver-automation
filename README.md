@@ -1,142 +1,99 @@
-# minecraftserver-automation
-My minecraft server automation process using telegram bot 
-My Server Ip 👉️ ``` alex5402.me```
-# Minecraft Server Telegram Bot
+# Minecraft Bot Terminal
 
-A Telegram bot designed to manage and monitor a Minecraft server. This bot allows administrators to start, stop, monitor, and manage backups for the server directly through Telegram commands. It is built using Python and integrates `pexpect` for server process management and `python-telegram-bot` for Telegram integration.
+This project provides a secure and easy-to-use Minecraft server control panel integrated into a Telegram bot. It allows authorized users to manage and interact with a Minecraft server through Telegram commands, perform secure backups, and access a live web-based terminal.
 
 ## Features
 
-- **Start and Stop Server**: Start and stop the Minecraft server with commands.
-- **Send Commands**: Execute Minecraft server commands directly through Telegram.
-- **Server Monitoring**: Automatically checks if the server is running and restarts it if it crashes.
-- **Clean Locks**: Remove lock files when needed.
-- **Backup Management**: Trigger backups manually or schedule them.
-- **Admin Management**: Restrict bot access to authorized users only.
-- **Notification System**: Sends important notifications about server status and backups.
+- **Server Control**: Start and stop the Minecraft server directly from Telegram.
+- **Live Web Terminal**: Access a real-time web-based terminal protected by a dynamically generated password.
+- **Secure Access**: Terminal sessions are secured with strong, randomly generated passwords provided via Telegram.
+- **Backup System**: Create server backups via Telegram with automated splitting and uploading to Telegram using `telegram-cli`.
+- **Authorization**: Restrict bot commands to specific authorized Telegram user IDs.
+- **Responsive Web Interface**: The web terminal interface is optimized for performance by limiting logs to prevent browser lag.
 
----
-
-## Installation
+## Setup
 
 ### Prerequisites
-1. **Python**: Ensure you have Python 3.8 or later installed.
-2. **Telegram Bot Token**: Obtain a bot token from the [BotFather](https://core.telegram.org/bots#botfather).
-3. **Dependencies**: Install required tools and libraries.
-   ```bash
-   sudo pacman -S screen curl   # For Arch Linux
-   pip install python-telegram-bot pexpect apscheduler
-   ```
 
-### Setup
+- Node.js (>= 16.x)
+- npm
+- Telegram Bot Token (from @BotFather)
+- `telegram-cli` for backup uploads
+- Minecraft Server files located in the `./server` directory
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/your-repository/minecraft-server-bot.git
-   cd minecraft-server-bot
-   ```
+### Installation
 
-2. **Set Up Admins**:
-   Create an `admins.json` file in the same directory:
-   ```json
-   {
-       "admins": [123456789]
-   }
-   ```
-   Replace `123456789` with the Telegram user ID of an admin.
+1. Clone the repository:
 
-3. **Configure Variables**:
-   Edit the bot configuration variables in the script:
-   - Replace `your_bot_token` with your Telegram bot token.
-   - Set `MONITOR_CHAT_ID` to the Telegram group ID or chat ID where monitoring messages will be sent.
-
-4. **Scripts**:
-   Ensure the following scripts exist in the project directory:
-   - `server.sh`: Script to start the Minecraft server.
-   - `backup.sh`: Script to back up the server.
-   - `clean.sh`: Script to clean up lock files.
-
-5. **Run the Bot**:
-   ```bash
-   python bot.py
-   ```
-
----
-
-## Commands
-
-### Admin Commands
-
-| Command            | Description                             |
-|--------------------|-----------------------------------------|
-| `/start`           | Starts a conversation with the bot.     |
-| `/startserver`     | Starts the Minecraft server.            |
-| `/stop`            | Stops the Minecraft server.             |
-| `/sendcommand <cmd>` | Sends a command to the server console. |
-| `/clean`           | Cleans up server lock files.            |
-| `/backup`          | Manually triggers a server backup.      |
-
-### Monitoring
-- The bot automatically monitors the server's status. If the server crashes, it attempts to restart and notifies the monitor chat.
-
----
-
-## Configuration Details
-
-### Files
-- **`admins.json`**: Stores the list of admin user IDs.
-- **`server.sh`**: Script to start the server.
-- **`backup.sh`**: Script to create backups.
-- **`clean.sh`**: Script to remove lock files.
-
-### Variables
-| Variable           | Description                                              |
-|--------------------|----------------------------------------------------------|
-| `ADMIN_FILE`       | Path to the admin configuration file.                    |
-| `MONITOR_CHAT_ID`  | Telegram chat ID for monitoring notifications.           |
-| `bot_token`        | Telegram bot token.                                      |
-| `serverdelay`      | Minimum wait time before stopping the server (seconds).  |
-| `backup_folder`    | Folder to store server backups.                          |
-| `serveris_on`      | Tracks the server's running state.                       |
-
----
-
-## Notifications
-The bot sends notifications for:
-- Server crashes and restarts.
-- Backup start and completion.
-- Errors encountered during script execution.
-
----
-
-## Scheduler
-
-The bot uses `apscheduler` to schedule daily backups at 3:00 AM. You can modify the schedule in the `main` function:
-```python
-scheduler.add_job(execute_backup_script, 'cron', hour=3, minute=0)
+```bash
+git clone <repository-url>
+cd <repository-directory>
 ```
 
----
+2. Install dependencies:
 
-## Known Issues
+```bash
+npm install
+```
 
-1. Ensure `server.sh`, `backup.sh`, and `clean.sh` are executable and correctly configured.
-   ```bash
-   chmod +x server.sh backup.sh clean.sh
-   ```
+3. Create a `.env` file in the project root with the following content:
 
-2. If the bot crashes unexpectedly, check for errors in your `admins.json` file or missing dependencies.
+```env
+BOT_TOKEN=your_telegram_bot_token
+AUTHORIZED_IDS=telegram_user_id1,telegram_user_id2
+SERVER_PORT=your_desired_port
+```
 
----
+4. Make scripts executable:
+
+```bash
+chmod +x start.sh backup.sh telegram-cli
+```
+
+### Usage
+
+- **Start the bot server**:
+
+```bash
+node server.js
+```
+
+## Telegram Commands
+
+- `/startserver`: Start the Minecraft server.
+- `/stopserver`: Stop the Minecraft server.
+- `/terminal`: Generate a secure password and get a link to access the live web-based terminal.
+- `/backup`: Perform a secure backup of the server and upload it to Telegram.
+
+## Web Terminal
+
+- Access URL: Provided dynamically via the Telegram bot when issuing the `/terminal` command.
+- Authentication: A randomly generated password sent as a spoiler-formatted Telegram message.
+
+## Directory Structure
+
+```bash
+├── server.js          # Main bot server file
+├── backup.sh          # Backup script
+├── start.sh           # Script to start Minecraft server
+├── telegram-cli       # CLI to upload backup files to Telegram
+├── server             # Directory containing Minecraft server files
+├── public             # Directory containing the web interface
+│   └── terminal.html  # Terminal interface
+├── .env               # Configuration file
+├── package.json
+└── package-lock.json
+```
+
+## Security
+
+- Passwords are securely generated with strong randomization (40 characters with symbols).
+- Terminal sessions expire once the bot session is invalidated.
 
 ## License
-This project is open-source and available under the MIT License. Feel free to contribute and customize.
+
+MIT License
 
 ---
 
-## Author
-Created by [@alex5402](https://t.me/alex5402).
-
-
-
-
+Enjoy managing your Minecraft server securely and conveniently!

@@ -1,71 +1,65 @@
 #!/bin/bash
 
-# Directories
-directory="/home/alex/Documents/minecraftserver-automation/server"
-backup_dir="~/temp/server_backup"
-split_dir="~/temp/server_backup/split_backups"
+SERVER_DIR="./server"
+BACKUP_DIR="./temp/server_backup"
+SPLIT_DIR="$BACKUP_DIR/split_backups"
 
 CHAT_ID="-1002420089111"
+TELEGRAM_CLI="./telegram-cli"
 
-telegram_cli_path="/root/serverspace/telegram-cli"
-
-
-# Clean the backup and split directories
 clean_backup_dir() {
-  echo "Cleaning files in $backup_dir..."
-  rm -rf "$backup_dir"
-  rm -rf "$split_dir"
-  mkdir -p "$backup_dir" "$split_dir"
-  echo "Backup directory cleaned."
+  echo "🔄 Cleaning backup directories..."
+  rm -rf "$BACKUP_DIR"
+  mkdir -p "$SPLIT_DIR"
+  echo "✅ Directories cleaned."
 }
 
-# Create a tar backup
 create_backup() {
-  backup_file="${backup_dir}/server-backup.tar.gz"
-  
-  echo "Creating backup..."
-  tar -czf "$backup_file" -C "$directory" --exclude="session.lock" .
-  echo "$backup_file"
-  
-  # Split the backup file if it exceeds a particular size
-  split -b 1024M "$backup_file" "$split_dir/backup.part_" 
+  local backup_file="${BACKUP_DIR}/server-backup-$(date '+%Y-%m-%d_%H-%M-%S').tar.gz"
+
+  echo "🔄 Creating backup..."
+  tar -czf "$backup_file" -C "$SERVER_DIR" --exclude="session.lock" .
+  echo "✅ Backup created: $backup_file"
+  split -b 1500M "$backup_file" "$SPLIT_DIR/backup.part_"
 }
 
 upload_files() {
+  if [[ ! -x "$TELEGRAM_CLI" ]]; then
+    echo "❌ Error: telegram-cli not found or not executable at $TELEGRAM_CLI"
+    exit 1
+  fi
 
-    if [[ ! -d "$split_dir" ]]; then
-        echo "Error: Directory $split_dir does not exist."
-        return 1
+  echo "🔄 Uploading backup files to Telegram..."
+
+  for file in "$SPLIT_DIR"/*; do
+    if [[ -f "$file" ]]; then
+      local description="Backup part uploaded at $(date '+%Y-%m-%d %H:%M:%S')"
+      echo "🔼 Uploading: $file"
+      "$TELEGRAM_CLI" -g "$CHAT_ID" -F "$file" -d "$description"
+
+      if [[ $? -ne 0 ]]; then
+        echo "❌ Error uploading $file"
+      else
+        echo "✅ Successfully uploaded $file"
+      fi
     fi
-
-    if [[ ! -x "$telegram_cli_path" ]]; then
-        echo "Error: Telegram CLI executable $telegram_cli_path not found or not executable."
-        return 1
-    fi
-
-    for file in "$split_dir"/*; do
-        if [[ -f "$file" ]]; then
-            description=$(date +'%Y-%m-%d_%H-%M-%S')
-            echo "Uploading file: $file with description: $description"
-            "$telegram_cli_path" -g "$CHAT_ID" -F "$file" -d "$description"
-            if [[ $? -ne 0 ]]; then
-                echo "Error: Failed to upload file $file"
-            else
-                echo "Successfully uploaded $file"
-            fi
-        fi
-    done
+  done
 }
 
-sendfinalmessage() {
-    date = $(date)
-"$telegram_cli_path" -g "$CHAT_ID"  -t "Backup created at : $date"
+
+send_final_message() {
+  local date_now=$(date '+%Y-%m-%d %H:%M:%S')
+  "$TELEGRAM_CLI" -g "$CHAT_ID" -t "✅ Backup completed successfully at: $date_now"
+  echo "📢 Final notification sent."
 }
 
-# Main process
+
 clean_backup_dir
-backup_file=$(create_backup)
+create_backup
 upload_files
-sendfinalmessage
-rm -rf "$backup_dir"
-echo "All steps completed successfully."
+send_final_message
+
+rm -rf "$BACKUP_DIR"
+echo "🧹 Backup files cleaned up."
+
+echo "🎉 Backup process completed successfully."
