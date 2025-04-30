@@ -1,4 +1,4 @@
-# Minecraft Bot Terminal
+# Minecraft Bot Automation
 
 This project provides a secure and easy-to-use Minecraft server control panel integrated into a Telegram bot. It allows authorized users to manage and interact with a Minecraft server through Telegram commands, perform secure backups, and access a live web-based terminal.
 
