@@ -2,12 +2,15 @@
 
 This project provides a secure and easy-to-use Minecraft server control panel integrated into a Telegram bot. It allows authorized users to manage and interact with a Minecraft server through Telegram commands, perform secure backups, and access a live web-based terminal.
 
+## have a look
+![Screenshot_20250430_115640](https://github.com/user-attachments/assets/bba5cb9f-952c-4b87-87d9-f41f684ece27)
+
 ## Features
 
 - **Server Control**: Start and stop the Minecraft server directly from Telegram.
 - **Live Web Terminal**: Access a real-time web-based terminal protected by a dynamically generated password.
 - **Secure Access**: Terminal sessions are secured with strong, randomly generated passwords provided via Telegram.
-- **Backup System**: Create server backups via Telegram with automated splitting and uploading to Telegram using `telegram-cli`.
+- **Backup System**: Create server backups via Telegram with automated splitting and uploading to Telegram using [telegram-cli](https://github.com/ALEX5402/telegram-cli).
 - **Authorization**: Restrict bot commands to specific authorized Telegram user IDs.
 - **Responsive Web Interface**: The web terminal interface is optimized for performance by limiting logs to prevent browser lag.
 
@@ -18,7 +21,7 @@ This project provides a secure and easy-to-use Minecraft server control panel in
 - Node.js (>= 16.x)
 - npm
 - Telegram Bot Token (from @BotFather)
-- `telegram-cli` for backup uploads
+- [telegram-cli](https://github.com/ALEX5402/telegram-cli/releases/tag/1.0.0-beta) for backup uploads
 - Minecraft Server files located in the `./server` directory
 
 ### Installation
