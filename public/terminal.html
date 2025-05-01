@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Minecraft Server Terminal</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      background-color: #111;
+      color: #0f0;
+      font-family: monospace;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #terminal {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      box-sizing: border-box;
+      font-size: 4vw; /* Responsive font size */
+      max-font-size: 15px; /* Set a maximum font size */
+    }
+
+    #input, #password {
+      width: 100%;
+      background-color: #222;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      box-sizing: border-box;
+      outline: none;
+      font-size: 2.5vw; /* Responsive font size for input */
+      max-font-size: 16px; /* Maximum font size for input */
+    }
+
+    #password-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      background-color: #111;
+    }
+
+    #auth-btn {
+      padding: 8px 15px;
+      margin-top: 10px;
+      border: none;
+      background-color: #333;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 2.5vw;
+      max-font-size: 18px; /* Max font size for the button */
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 600px) {
+      #terminal {
+        font-size: 5vw; /* Smaller font size for mobile */
+      }
+
+      #input, #password {
+        font-size: 3.5vw; /* Adjust input font size for mobile */
+      }
+
+      #auth-btn {
+        font-size: 4vw;
+      }
+    }
+
+    /* Large screens (tablets, desktops) */
+    @media (min-width: 1200px) {
+      #terminal {
+        font-size: 2vw; /* Fine-tune font size for large screens */
+      }
+
+      #input, #password {
+        font-size: 1.5vw;
+      }
+
+      #auth-btn {
+        font-size: 1.5vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="password-container">
+    <input id="password" type="password" placeholder="Enter Password">
+    <button id="auth-btn">Authenticate</button>
+  </div>
+
+  <pre id="terminal" style="display:none;"></pre>
+  <input id="input" type="text" autofocus autocomplete="off" placeholder="Enter command..." style="display:none;">
+
+  <script>
+    const socket = io();
+    const terminal = document.getElementById('terminal');
+    const input = document.getElementById('input');
+    const passwordContainer = document.getElementById('password-container');
+    const authBtn = document.getElementById('auth-btn');
+    const passwordInput = document.getElementById('password');
+
+    const MAX_LINES = 500;
+
+    function removeAnsiCodes(str) {
+      return str.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
+    }
+
+    function limitTerminalLines() {
+      const lines = terminal.textContent.split('\n');
+      if (lines.length > MAX_LINES) {
+        terminal.textContent = lines.slice(lines.length - MAX_LINES).join('\n');
+      }
+    }
+
+    authBtn.addEventListener('click', () => {
+      const password = passwordInput.value.trim();
+      socket.emit('authenticate', password);
+    });
+
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') authBtn.click();
+    });
+
+    socket.on('auth_failed', () => {
+      alert('⚠️ Authentication Failed: Wrong Password.');
+    });
+
+    socket.on('output', data => {
+      const cleanOutput = removeAnsiCodes(data);
+      terminal.textContent += cleanOutput;
+      limitTerminalLines();
+      terminal.scrollTop = terminal.scrollHeight;
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected, waiting for authentication.');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from server.');
+    });
+
+    socket.on('authenticated', () => {
+      passwordContainer.style.display = 'none';
+      terminal.style.display = 'block';
+      input.style.display = 'block';
+      input.focus();
+    });
+
+    const sendCommand = () => {
+      if (input.value.trim() !== '') {
+        socket.emit('input', input.value + '\n');
+        input.value = '';
+      }
+    };
+
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendCommand();
+    });
+
+    window.onload = () => {
+      terminal.scrollTop = terminal.scrollHeight;
+    };
+
+    terminal.addEventListener('click', () => {
+      input.focus();
+    });
+
+    socket.on('force_disconnect', () => {
+      alert('⚠️ Session closed by admin.');
+      socket.disconnect();
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
